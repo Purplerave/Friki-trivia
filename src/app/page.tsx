@@ -1,3 +1,4 @@
+Copiar
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -22,14 +23,13 @@ export default function Home() {
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [message, setMessage] = useState('');
+  const [quizResults, setQuizResults] = useState<Array<{ question: Question; selectedOption: number; isCorrect: boolean }>>([]);
 
   useEffect(() => {
     // Load username from localStorage
     const storedUsername = localStorage.getItem('trivia_username');
     if (storedUsername) {
       setUsername(storedUsername);
-      // In a real app, you'd fetch userId from your 'users' table based on username
-      // For now, we'll assume a simple mapping or generate one if not found
       const storedUserId = localStorage.getItem('trivia_user_id');
       if (storedUserId) {
         setUserId(storedUserId);
@@ -109,6 +109,8 @@ export default function Home() {
     const currentQuestion = questions[currentQuestionIndex];
     const isCorrect = selectedOption === currentQuestion.correct_answer_index;
 
+    setQuizResults(prevResults => [...prevResults, { question: currentQuestion, selectedOption, isCorrect }]);
+
     if (isCorrect) {
       setScore(score + 1);
     }
@@ -138,6 +140,20 @@ export default function Home() {
       setQuizCompleted(true);
       // TODO: Update total score and time for user in 'users' table
     }
+  };
+
+  const handleRestartQuiz = () => {
+    setCurrentQuestionIndex(0);
+    setSelectedOption(null);
+    setScore(0);
+    setQuizCompleted(false);
+    setQuizResults([]);
+    setMessage('');
+  };
+
+  const handleGoToLeaderboard = () => {
+    // TODO: Navigate to leaderboard page
+    alert('Navegar a la tabla de clasificación (próximamente)!');
   };
 
   if (!username || !userId) {
@@ -210,11 +226,45 @@ export default function Home() {
             </button>
           </div>
         ) : (
-          <div>
+          <div className="text-gray-300">
             <h2 className="text-2xl font-bold mb-4 text-purple-400">Trivial Completado!</h2>
-            <p className="text-gray-300 mb-4">Tu puntuación: {score} de {questions.length}</p>
-            <p className="text-gray-300">¡Gracias por jugar, {username}!</p>
-            {/* TODO: Mostrar explicación de respuestas y botón para ver leaderboard */}
+            <p className="mb-4">Tu puntuación: {score} de {questions.length}</p>
+            <p className="mb-6">¡Gracias por jugar, {username}!</p>
+
+            <h3 className="text-xl font-bold mb-3 text-purple-300">Resultados Detallados:</h3>
+            <div className="space-y-4">
+              {quizResults.map((result, index) => (
+                <div key={index} className="p-4 border rounded-lg bg-gray-700">
+                  <p className="font-semibold">{index + 1}. {result.question.question_text}</p>
+                  <p className={`text-sm ${result.isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                    Tu respuesta: {result.question.options[result.selectedOption]} ({result.isCorrect ? 'Correcta' : 'Incorrecta'})
+                  </p>
+                  {!result.isCorrect && (
+                    <p className="text-sm text-green-400">
+                      Correcta: {result.question.options[result.question.correct_answer_index]}
+                    </p>
+                  )}
+                  <p className="text-sm text-gray-400 mt-1">
+                    Explicación: {result.question.explanation}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 space-y-3">
+              <button
+                onClick={handleRestartQuiz}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300"
+              >
+                Jugar de Nuevo (Solo para pruebas)
+              </button>
+              <button
+                onClick={handleGoToLeaderboard}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300"
+              >
+                Ver Tabla de Clasificación
+              </button>
+            </div>
           </div>
         )}
       </div>
